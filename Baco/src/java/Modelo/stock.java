@@ -4,21 +4,25 @@ package Modelo;
 import java.sql.Date;
 
 
-public class stock {
+public class Stock {
     
     private int id;
-    private double cantidad;
-    private double usado;
+    private int cantidad;
+    private int usado;
     private String proveedor;
+    private String nomProd;
     private int id_producto;
+    private boolean ingrediente;
     private Date fecha;
 
-    public stock(int id, double cantidad, double usado, String proveedor, int id_producto, Date fecha) {
+    public Stock(int id, int cantidad, int usado, String proveedor, String nomProd, int id_producto, boolean ingrediente, Date fecha) {
         this.id = id;
         this.cantidad = cantidad;
         this.usado = usado;
         this.proveedor = proveedor;
+        this.nomProd = nomProd;
         this.id_producto = id_producto;
+        this.ingrediente = ingrediente;
         this.fecha = fecha;
     }
 
@@ -30,19 +34,19 @@ public class stock {
         this.id = id;
     }
 
-    public double getCantidad() {
+    public int getCantidad() {
         return cantidad;
     }
 
-    public void setCantidad(double cantidad) {
+    public void setCantidad(int cantidad) {
         this.cantidad = cantidad;
     }
 
-    public double getUsado() {
+    public int getUsado() {
         return usado;
     }
 
-    public void setUsado(double usado) {
+    public void setUsado(int usado) {
         this.usado = usado;
     }
 
@@ -54,12 +58,28 @@ public class stock {
         this.proveedor = proveedor;
     }
 
+    public String getNomProd() {
+        return nomProd;
+    }
+
+    public void setNomProd(String nomProd) {
+        this.nomProd = nomProd;
+    }
+
     public int getId_producto() {
         return id_producto;
     }
 
     public void setId_producto(int id_producto) {
         this.id_producto = id_producto;
+    }
+
+    public boolean isIngrediente() {
+        return ingrediente;
+    }
+
+    public void setIngrediente(boolean ingrediente) {
+        this.ingrediente = ingrediente;
     }
 
     public Date getFecha() {
@@ -70,9 +90,6 @@ public class stock {
         this.fecha = fecha;
     }
 
-    @Override
-    public String toString() {
-        return "stock{" + "id=" + id + ", cantidad=" + cantidad + ", usado=" + usado + ", proveedor=" + proveedor + ", id_producto=" + id_producto + ", fecha=" + fecha + '}';
-    }
+    
     
 }

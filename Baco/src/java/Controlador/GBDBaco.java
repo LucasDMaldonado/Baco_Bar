@@ -1,16 +1,22 @@
 package Controlador;
+import Modelo.Categoria;
+import Modelo.DTOMesaXPedido;
+import Modelo.DTOPedido;
 import Modelo.DTOTragoxReceta;
 import Modelo.DTOVenta;
+import Modelo.Mesa;
+import Modelo.Pedido;
 import Modelo.Producto;
-import Modelo.Receta;
 import Modelo.Trago;
 import Modelo.Usuario;
+import Modelo.Stock;
+import Modelo.TragoxCant;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.sql.Date;
 
-public class GestorBD {
+public class GBDBaco {
     
     private Connection con;
     @SuppressWarnings("FieldMayBeFinal")
@@ -106,8 +112,7 @@ public class GestorBD {
     }
     public void agregarVenta(DTOVenta V)
     {
-        LocalDate Fecha = LocalDate.now();
-        Date date = Date.valueOf(Fecha);
+        
         ArrayList<Trago> trago = V.getTrago();
         try
         {
@@ -125,7 +130,7 @@ public class GestorBD {
                     int idVenta = rs.getInt(1);
                     for (Trago trag : trago) 
                     {
-                        ps = con.prepareStatement("INSERT INTO Detalles_venta (id_Venta,Id_Trago,Cantidad,Precio_unitario) VALUES (?,?,?,?)");
+                        ps = con.prepareStatement("INSERT INTO Detalles_venta (id_Venta,Id_Pedido,) VALUES (?,?)");
                         ps.setInt(1,idVenta);
                         ps.setInt(2,trag.getId());
                         ps.setInt(3,trag.getCantidad());
@@ -149,39 +154,87 @@ public class GestorBD {
         {
             cerrarConexion();
         }
-    }        
-    public ArrayList<DTOTragoxReceta> obtenerTragosxReceta()
+    } 
+    public void agregarPedido (Pedido p)
     {
-        ArrayList<DTOTragoxReceta> lista = new ArrayList<>();
-        ArrayList<Receta> rec = new ArrayList<>();
+        LocalDate Fecha = LocalDate.now();
+        Date date = Date.valueOf(Fecha);
+        ArrayList<Trago> trago = V.getTrago();
+        try
+        {
+            abrirConexion();
+            PreparedStatement ps = con.prepareStatement("INSERT INTO Ventas(Id_mesa,Total,Fecha,id_pago,Pagado) VALUES(?,?,?,?,?)",Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1,V.getVenta().getId_Mesa());
+            ps.setDouble(2,V.getVenta().getTotal());
+            ps.setDate(3,date);
+            ps.setInt(4,V.getVenta().getId_pago());
+            ps.setBoolean(5,V.getVenta().isPagado());
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (!rs.next()) throw new RuntimeException("no devolvió el ID");
+
+                    int idVenta = rs.getInt(1);
+                    for (Trago trag : trago) 
+                    {
+                        ps = con.prepareStatement("INSERT INTO Detalles_venta (id_Venta,Id_Pedido,) VALUES (?,?)");
+                        ps.setInt(1,idVenta);
+                        ps.setInt(2,trag.getId());
+                        ps.setInt(3,trag.getCantidad());
+                        ps.setDouble(4,trag.getPrecio());
+                        ps.addBatch();
+                    }
+                ps.executeUpdate();
+                rs.close();
+                }
+            catch(Exception exc)
+                {
+                    exc.printStackTrace();
+                }
+            }
+        
+        catch(Exception exc)
+        {
+            exc.printStackTrace();
+        }
+        finally
+        {
+            cerrarConexion();
+        }
+    }    
+    public ArrayList<DTOTragoxReceta> obtenerTragosxReceta()
+        {
+        ArrayList<Trago> trago= new ArrayList<>();
+        ArrayList<DTOTragoxReceta> DTOTxI = new ArrayList<>();
+        ArrayList<Producto> ingredientes = new ArrayList<>();
         try
         {
             abrirConexion();
             Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT * FROM Tragos");
+            ResultSet rs = st.executeQuery("SELECT T.*,C.Categoria FROM Tragos T JOIN Categorias C ON T.Id_Categoria = C.Id_Categoria");
             while(rs.next())
             {
                 int id = rs.getInt("Id_Trago");
                 String nombre = rs.getString("Nombre_Trago");
                 boolean disp = rs.getBoolean("Disponible");
                 double precio = rs.getDouble("Precio");
-                int idcat =rs.getInt("Id_Categoria");
-                Trago trag = new Trago(id, nombre, disp, precio, idcat, 0);
-               
+                int idcat = rs.getInt("Id_Categoria");
+                String cat= rs.getString("Categoria");
+                Trago trag = new Trago(id, nombre, disp, precio, idcat);
+                trago.add(trag);
                 try
                 {
-                    PreparedStatement ps = con.prepareStatement("SELECT * FROM Ventas WHERE id = ?");
+                    PreparedStatement ps = con.prepareStatement("SELECT P.* FROM Recetas R JOIN Tragos T ON R.Id_trago = T.Id_Trago LEFT JOIN Productos P ON R.Id_Producto= P.Id_Producto WHERE T.Id_Trago =? ");
                     ps.setInt(1, id);
                     ResultSet rs2 = ps.executeQuery();
                     while(rs.next())
                     {
                         int idprod = rs2.getInt("Id_Producto");
-                        double cant = rs2.getDouble("Cantidad");
+                        String nomprod = rs2.getString("Nombre_Producto");
+                        boolean ingrediente = rs2.getBoolean("Ingrediente");
 
 
-
-                        Receta r = new Receta(0, id, idprod, cant);
-                        rec.add(r);
+                       Producto p = new Producto(id, nombre, ingrediente);
+                        ingredientes.add(p);
                     }
                 }
                 catch(Exception exc)
@@ -191,8 +244,9 @@ public class GestorBD {
                 
                
 
-                DTOTragoxReceta dto = new DTOTragoxReceta(trag,rec);
-                lista.add(dto);
+               
+                DTOTragoxReceta dto = new DTOTragoxReceta(trag, ingredientes,cat);
+                DTOTxI.add(dto);
             }
             rs.close();
         }
@@ -205,34 +259,55 @@ public class GestorBD {
             cerrarConexion();
         }
         
-        return lista;
+        return DTOTxI;
     }
-    public ArrayList<Comentario> obtenerMesas(int idcome)
-    {
-        ArrayList<Comentario> lista = new ArrayList<Comentario>();
+    public DTOTragoxReceta obtenerTragosxRecetaxId(int idt)
+    {   
+        DTOTragoxReceta dto = null;
+        ArrayList<Producto> ingredientes = new ArrayList<>();
         try
         {
             abrirConexion();
-            PreparedStatement ps = con.prepareStatement("SELECT * FROM Comentarios WHERE idComercio = ?");
-            ps.setInt(1,idcome);
+            PreparedStatement ps = con.prepareStatement("SELECT T.*,C.Categoria FROM Tragos T JOIN Categorias C ON T.Id_Categoria = C.Id_Categoria  WHERE Id_Trago ?");
+            ps.setInt(1, idt);
             ResultSet rs = ps.executeQuery();
             while(rs.next())
             {
-                int idcoment = rs.getInt("idComentario");
-                String nombre = rs.getString("Nombre");
-                String Comentario = rs.getString("Comentario");
-                int idComercio = rs.getInt("idComercio");
-                int idValoracion = rs.getInt("idValoracion");
-                boolean Resp = rs.getBoolean("Respondido");
-                int iduser = rs.getInt("idUsuario");
-                String nombreRta = rs.getString("NombreRta");
-                String rta = rs.getString("Respuesta");
+                int id = rs.getInt("Id_Trago");
+                String nombre = rs.getString("Nombre_Trago");
+                boolean disp = rs.getBoolean("Disponible");
+                double precio = rs.getDouble("Precio");
+                int idcat =rs.getInt("Id_Categoria");
+                String cat= rs.getString("Categoria");
+                Trago trag = new Trago(id, nombre, disp, precio, idcat);
                 
-                Comentario comentario = new Comentario(idcoment, nombre, idComercio, idValoracion, Comentario, Resp, nombreRta, iduser, rta);
-                lista.add(comentario);
-            }
+                try
+                {
+                    PreparedStatement ps2 = con.prepareStatement("SELECT P.* FROM Recetas R JOIN Tragos T ON R.Id_trago = T.Id_Trago LEFT JOIN Productos P ON R.Id_Producto= P.Id_Producto WHERE T.Id_Trago =? ");
+                    ps2.setInt(1, id);
+                    ResultSet rs2 = ps2.executeQuery();
+                    while(rs.next())
+                    {
+                        int idprod = rs2.getInt("Id_Producto");
+                        String nomprod = rs2.getString("Nombre_Producto");
+                        boolean ingrediente = rs2.getBoolean("Ingrediente");
+
+
+                       Producto p = new Producto(id, nombre, ingrediente);
+                        ingredientes.add(p);
+                    }
+                }
+                catch(Exception exc)
+                {
+                    exc.printStackTrace();
+                }
+                DTOTragoxReceta DTO= new DTOTragoxReceta(trag, ingredientes,cat);
+                dto = DTO;
+               }
             rs.close();
+            
         }
+        
         catch(Exception exc)
         {
             exc.printStackTrace();
@@ -242,23 +317,65 @@ public class GestorBD {
             cerrarConexion();
         }
         
-        return lista;
+        return dto;
     }
-    public ArrayList<Rubro> obtenerProducto()
+    public ArrayList<DTOMesaXPedido> obtenerMesasxPedido()
     {
-        ArrayList<Rubro> lista = new ArrayList<Rubro>();
+        ArrayList<TragoxCant> listaT = new ArrayList<>();
+        ArrayList<DTOMesaXPedido> lista = new ArrayList<>();
         try
         {
             abrirConexion();
             Statement ps = con.createStatement();
-            ResultSet rs = ps.executeQuery("SELECT R.idRubro,R.Descripcion,rtrim(ltrim(I.NombreImagen))'NombreImagen' FROM Rubros R JOIN Imagenes I ON R.idImagen=I.idImagen");
+            ResultSet rs = ps.executeQuery("SELECT M.*,P.Id_pedido FROM Mesas M JOIN Pedidos P ON M.Id_Mesas = P.Id_Mesa WHERE P.Estado = 1");
             while(rs.next())
             {
-                int idRubro = rs.getInt("idRubro");
-                String Descripcion = rs.getString("Descripcion");
-                String img = rs.getString("NombreImagen");                             
-                Rubro R = new Rubro(idRubro, img, Descripcion);
-                lista.add(R);
+                int idMesa = rs.getInt("Id_Mesas");
+                String Nombre = rs.getString("Nombre");
+                String Ubicacion = rs.getString("Ubicacion");
+                int Pedido = rs.getInt("Id_pedido");                
+                Mesa M = new Mesa(Pedido, Nombre, Ubicacion, Pedido);
+                
+                try
+                {
+                    PreparedStatement ps2 = con.prepareStatement("SELECT P.* FROM Pedidos P JOIN Mesas M ON P.Id_Mesa = M.Id_Mesas WHERE P.Id_pedido = ? ");
+                    ps2.setInt(1, Pedido);
+                    ResultSet rs2 = ps2.executeQuery();
+                    while(rs2.next())
+                    {
+                        int idPedido = rs2.getInt("Id_pedido");
+                        int idMes = rs2.getInt("Id_Mesa");
+                        Date fecha = rs2.getDate("Tiempo");
+                        boolean Estado = rs2.getBoolean("Estado");
+                        Pedido p = new Pedido(idPedido, idMesa, Estado, fecha);
+                        try
+                        {
+                            PreparedStatement ps3 = con.prepareStatement("SELECT D.Id_Trago,T.Nombre_Trago,D.cantidad,T.Precio FROM Detalle_Pedidos D JOIN Pedidos P ON D.Id_Pedido = P.Id_pedido JOIN Tragos T ON D.Id_Trago = T.Id_Trago WHERE D.Id_Pedido =? ");
+                            ps3.setInt(1, idPedido);
+                            ResultSet rs3 = ps3.executeQuery();
+                            while(rs3.next())
+                            {
+                                int idTrago = rs3.getInt("Id_Trago");
+                                String nomTrago = rs3.getString("Nombre_Trago");
+                                int cant = rs3.getInt("cantidad");
+                                double precio = rs3.getDouble("Precio");
+
+                                TragoxCant t =  new TragoxCant(idTrago, nomTrago, cant, precio);
+                                listaT.add(t);
+                            }
+                            
+                        }
+                        catch(Exception exc)
+                        {
+                            exc.printStackTrace();
+                        }
+                        DTOPedido P = new DTOPedido(p, listaT);
+                       DTOMesaXPedido MxP = new DTOMesaXPedido(M, P);
+                       lista.add(MxP);
+                    }
+                    
+                }                             
+                
             }
             rs.close();
         }
@@ -273,27 +390,131 @@ public class GestorBD {
         
         return lista;
     }
-    public ArrayList<Comercio> obtenerCategorias(int idRubro)
+    public ArrayList<Stock> obtenerStock(int caso)
     {
-        ArrayList<Comercio> lista = new ArrayList<Comercio>();
+        ArrayList<Stock> lista = new ArrayList<>();
         try
         {
-            abrirConexion();
-            PreparedStatement st = con.prepareStatement("SELECT C.idComercio,C.idRubro,C.Nombre,c.idUsuario,C.idImagen,rtrim(ltrim(I.NombreImagen))'NombreImagen'FROM Comercios C JOIN Imagenes I ON C.idImagen=I.idImagen WHERE C.idRubro = ?");
-            st.setInt(1, idRubro);
-            ResultSet rs = st.executeQuery();
-            while(rs.next())
+            if (caso==1) 
             {
-                int idcome = rs.getInt("idComercio");
-                int rubro = rs.getInt("idRubro");
-                String nombre = rs.getString("Nombre");
-                int iduser= rs.getInt("idUsuario");
-                Imagen img = new Imagen(rs.getInt("idImagen"), rs.getString("NombreImagen"));
-                             
-                Comercio R = new Comercio(idcome, nombre, rubro, iduser, img);
-                lista.add(R);
+                abrirConexion();
+                Statement ps = con.createStatement();
+                ResultSet rs = ps.executeQuery("SELECT S.*,P.Nombre_Producto, P.Ingrediente FROM Stocks S  JOIN Productos P ON S.Id_producto = P.Id_Producto");
+                while(rs.next())
+                {
+                    int id = rs.getInt("Id_Stock");
+                    int cant = rs.getInt("Cantidad");
+                    int usado = rs.getInt("Usado");
+                    int idProd = rs.getInt("Id_producto");
+                    String producto = rs.getString("Nombre_Producto");
+                    String proveedor = rs.getString("Proveedor");
+                    boolean ingrediente = rs.getBoolean("Ingrediente");
+                    Date fecha = rs.getDate("Fecha_Actualizacion");
+
+                    Stock S = new Stock(id, cant, usado, proveedor, producto, idProd, ingrediente, fecha);
+                    lista.add(S);
+                }
+                 rs.close();
             }
-            rs.close();
+            else if (caso == 2) {
+                abrirConexion();
+                Statement ps = con.createStatement();
+                ResultSet rs = ps.executeQuery("SELECT S.*,P.Nombre_Producto, P.Ingrediente FROM Stocks S  JOIN Productos P ON S.Id_producto = P.Id_Producto WHERE P.Ingrediente = 1");
+                while(rs.next())
+                {
+                    int id = rs.getInt("Id_Stock");
+                    int cant = rs.getInt("Cantidad");
+                    int usado = rs.getInt("Usado");
+                    int idProd = rs.getInt("Id_producto");
+                    String producto = rs.getString("Nombre_Producto");
+                    String proveedor = rs.getString("Proveedor");
+                    boolean ingrediente = rs.getBoolean("Ingrediente");
+                    Date fecha = rs.getDate("Fecha_Actualizacion");
+
+                    Stock S = new Stock(id, cant, usado, proveedor, producto, idProd, ingrediente, fecha);
+                    lista.add(S);
+                }
+                 rs.close();
+            }
+            else if (caso == 3) {
+                abrirConexion();
+                Statement ps = con.createStatement();
+                ResultSet rs = ps.executeQuery("SELECT S.*,P.Nombre_Producto, P.Ingrediente FROM Stocks S  JOIN Productos P ON S.Id_producto = P.Id_Producto WHERE P.Ingrediente = 0");
+                while(rs.next())
+                {
+                    int id = rs.getInt("Id_Stock");
+                    int cant = rs.getInt("Cantidad");
+                    int usado = rs.getInt("Usado");
+                    int idProd = rs.getInt("Id_producto");
+                    String producto = rs.getString("Nombre_Producto");
+                    String proveedor = rs.getString("Proveedor");
+                    boolean ingrediente = rs.getBoolean("Ingrediente");
+                    Date fecha = rs.getDate("Fecha_Actualizacion");
+
+                    Stock S = new Stock(id, cant, usado, proveedor, producto, idProd, ingrediente, fecha);
+                    lista.add(S);
+            }
+             rs.close();
+            }
+            
+           
+        }
+        catch(Exception exc)
+        {
+            exc.printStackTrace();
+        }
+        finally
+        {
+            cerrarConexion();
+        }
+        
+        return lista;
+    }
+    public ArrayList<Categoria> obtenerCategorias()
+    {
+        ArrayList<Categoria> lista = new ArrayList<>();
+        try
+        {
+           abrirConexion();
+                Statement ps = con.createStatement();
+                ResultSet rs = ps.executeQuery("SELECT * FROM Categorias");
+                while(rs.next())
+                {
+                    int id = rs.getInt("Id_Categoria");               
+                    String cat = rs.getString("Categoria");
+                    Categoria c = new Categoria(id, cat);
+                    lista.add(c);
+                }
+                 rs.close();
+        }
+        catch(Exception exc)
+        {
+            exc.printStackTrace();
+        }
+        finally
+        {
+            cerrarConexion();
+        }
+        
+        return lista;
+    }
+        public ArrayList<Producto> obtenerIngredientes()
+    {
+        ArrayList<Producto> lista = new ArrayList<>();
+        try
+        {
+           abrirConexion();
+                Statement ps = con.createStatement();
+                ResultSet rs = ps.executeQuery("SELECT * FROM Productos WHERE Ingrediente = 1");
+                while(rs.next())
+                {
+                    int id = rs.getInt("Id_Producto");               
+                    String nombre = rs.getString("Nombre_Producto");
+                    boolean ing = rs.getBoolean("ingrediente");
+                    Producto p = new Producto(id, nombre, ing);
+                    lista.add(c);
+                }
+                 rs.close();
         }
         catch(Exception exc)
         {
@@ -345,23 +566,27 @@ public class GestorBD {
         
         return lista;
     }
-     public Imagen obtenerStock(int idcomercio)
+     public Stock obtenerStockxId(int idStock)
     {
-        Imagen img= null;
+        Stock stock = null;
         try
         {
             abrirConexion();
-           PreparedStatement ps = con.prepareStatement("SELECT I.idImagen,rtrim(ltrim(I.NombreImagen))'NombreImagen'\n" +
-                                                        "FROM Imagenes I\n" +
-                                                        "JOIN Comercios C ON C.idImagen= I.idImagen\n" +
-                                                        "WHERE C.idComercio =?");
-           ps.setInt(1, idcomercio);
+           PreparedStatement ps = con.prepareStatement("SELECT S.*,P.Nombre_Producto, P.Ingrediente FROM Stocks S  JOIN Productos P ON S.Id_producto = P.Id_Producto WHERE S.Id_Stock = ?");
+           ps.setInt(1, idStock);
             ResultSet rs = ps.executeQuery();
             if(rs.next())
             {
-                int idimg = rs.getInt("idImagen");
-                String nombreimg = rs.getString("NombreImagen");                             
-                img = new Imagen(idimg, nombreimg);
+                int id = rs.getInt("Id_Stock");
+                    int cant = rs.getInt("Cantidad");
+                    int usado = rs.getInt("Usado");
+                    int idProd = rs.getInt("Id_producto");
+                    String producto = rs.getString("Nombre_Producto");
+                    String proveedor = rs.getString("Proveedor");
+                    boolean ingrediente = rs.getBoolean("Ingrediente");
+                    Date fecha = rs.getDate("Fecha_Actualizacion");
+
+                    stock = new Stock(id, cant, usado, proveedor, producto, idProd, ingrediente, fecha);
             }
             rs.close();
         }
@@ -374,27 +599,27 @@ public class GestorBD {
             cerrarConexion();
         }
         
-        return img;
+        return stock;
     } 
-     public ValXCom obtener(int idcomercio)
+     public Usuario ValidarUser(Usuario User1)
     {
-        ValXCom vc = new ValXCom(0, 0, idcomercio);
+       Usuario user = null;
         try
         {
             abrirConexion();
-           PreparedStatement ps = con.prepareStatement("SELECT AVG(C.idValoracion)'PROMEDIO', COUNT(C.idValoracion)'CANTIDAD',C.idComercio\n" +
-                                                        "FROM Comentarios C\n" +
-                                                        "JOIN Comercios CO ON C.idComercio =CO.idComercio\n" +
-                                                        "WHERE C.idComercio =?\n" +
-                                                        "GROUP BY C.idComercio");
-           ps.setInt(1, idcomercio);
-            ResultSet rs = ps.executeQuery();
+            PreparedStatement st = con.prepareStatement("SELECT * FROM Usuarios WHERE Id_Usuario = ? AND Password = ?");
+            st.setString(1, User1.getUser());
+            st.setString(2, User1.getPass());
+            ResultSet rs = st.executeQuery();
             if(rs.next())
             {
-                int cant = rs.getInt("CANTIDAD");
-                double prom = rs.getDouble("PROMEDIO");  
-                int idcome = rs.getInt("idComercio");
-                vc = new ValXCom(cant, prom, idcome);
+              
+                String Usuario = rs.getString("Id_Usuario");
+                String Password = rs.getString("Password");
+               
+                
+                user = new Usuario(Usuario, Password);
+                
             }
             rs.close();
         }
@@ -407,7 +632,7 @@ public class GestorBD {
             cerrarConexion();
         }
         
-        return vc;
+        return user;
     } 
      public ArrayList<DTOComercio> obtenerProductoMasUsado()
     {
@@ -751,44 +976,25 @@ public class GestorBD {
             cerrarConexion();
         }
     } 
-    public void actualizarProducto(DTORubro R)
+    public void actualizarStock(Stock S)
     {
-        if (R.getIdimg()==0) {
-            try
-        {
-            abrirConexion();
-            PreparedStatement ps = con.prepareStatement("DECLARE @IDIMG INT\n" +
-                                                            " BEGIN TRANSACTION\n" +
-                                                            "INSERT INTO Imagenes(NombreImagen) VALUES (?)\n" +
-                                                            "SET @IDIMG = @@IDENTITY\n" +
-                                                            " UPDATE Rubros SET Descripcion= ?, idImagen= @IDIMG\n" +
-                                                            " WHERE idRubro = ?\n" +
-                                                            " COMMIT TRANSACTION");
-            ps.setString(1, R.getImg());
-            ps.setString(2, R.getDescripcion());
-            ps.setInt(3, R.getIdRubro());
-            ps.executeUpdate();
-        }
-        catch(Exception exc)
-        {
-            exc.printStackTrace();
-        }
-        finally
-        {
-            cerrarConexion();
-        }
-            
-        }
-        else{
         try
         {
             abrirConexion();
-            PreparedStatement ps = con.prepareStatement("UPDATE Rubros SET Descripcion= ?, idImagen= ?\n" +
-                                                            " WHERE idRubro = ?\n");
-            ps.setString(1, R.getDescripcion());
-            ps.setInt(2, R.getIdimg());
-            ps.setInt(3, R.getIdRubro());
+            PreparedStatement ps = con.prepareStatement("BEGIN TRANSACTION\n" +
+                                                        "UPDATE Stocks SET Cantidad =?,Usado =?, Proveedor=?,Id_producto=?,Fecha_Actualizacion=GETDATE()  WHERE Id_Stock = ?\n" +
+                                                        "UPDATE Productos SET  Nombre_Producto = ?, Ingrediente = ? WHERE Id_Producto = ?\n" +
+                                                        "COMMIT TRANSACTION");
+            ps.setInt(1,S.getCantidad() );
+            ps.setInt(2, S.getUsado());
+            ps.setString(3, S.getProveedor());
+            ps.setInt(4, S.getId_producto());
+            ps.setInt(5, S.getId());
+            ps.setString(6, S.getNomProd());
+            ps.setBoolean(7, S.isIngrediente());
+            ps.setInt(8, S.getId_producto());
             ps.executeUpdate();
+            
         }
         catch(Exception exc)
         {
@@ -797,8 +1003,6 @@ public class GestorBD {
         finally
         {
             cerrarConexion();
-        }
-        
         }
            
     }

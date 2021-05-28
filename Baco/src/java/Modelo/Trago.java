@@ -15,23 +15,15 @@ public class Trago {
     private boolean disponible;
     private double precio;
     private int categoria;
-    private int Cantidad;
 
-    public Trago(int id, String nombre, boolean disponible, double precio, int categoria, int Cantidad) {
+
+    public Trago(int id, String nombre, boolean disponible, double precio, int categoria) {
         this.id = id;
         this.nombre = nombre;
         this.disponible = disponible;
         this.precio = precio;
         this.categoria = categoria;
-        this.Cantidad = Cantidad;
-    }
-
-    public int getCantidad() {
-        return Cantidad;
-    }
-
-    public void setCantidad(int Cantidad) {
-        this.Cantidad = Cantidad;
+        
     }
 
     public int getId() {

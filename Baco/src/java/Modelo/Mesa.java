@@ -6,11 +6,21 @@ public class Mesa {
     private int id;
     private String Nombre;
     private String Ubicacion;
+    private int idPedido;
 
-    public Mesa(int id, String Nombre, String Ubicacion) {
+    public Mesa(int id, String Nombre, String Ubicacion, int idPedido) {
         this.id = id;
         this.Nombre = Nombre;
         this.Ubicacion = Ubicacion;
+        this.idPedido = idPedido;
+    }
+
+    public int getIdPedido() {
+        return idPedido;
+    }
+
+    public void setIdPedido(int idPedido) {
+        this.idPedido = idPedido;
     }
 
     public int getId() {
@@ -37,9 +47,5 @@ public class Mesa {
         this.Ubicacion = Ubicacion;
     }
 
-    @Override
-    public String toString() {
-        return "Mesa{" + "id=" + id + ", Nombre=" + Nombre + ", Ubicacion=" + Ubicacion + '}';
-    }
     
 }

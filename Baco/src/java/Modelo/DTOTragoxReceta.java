@@ -14,11 +14,13 @@ import java.util.ArrayList;
 public class DTOTragoxReceta {
     
     private Trago trag;
-    private ArrayList<Receta> Rece;
+    private ArrayList<Producto> prod;
+    private String Categoria;
 
-    public DTOTragoxReceta(Trago trag, ArrayList<Receta> Rece) {
+    public DTOTragoxReceta(Trago trag, ArrayList<Producto> prod, String Categoria) {
         this.trag = trag;
-        this.Rece = Rece;
+        this.prod = prod;
+        this.Categoria = Categoria;
     }
 
     public Trago getTrag() {
@@ -29,12 +31,21 @@ public class DTOTragoxReceta {
         this.trag = trag;
     }
 
-    public ArrayList<Receta> getRece() {
-        return Rece;
+    public ArrayList<Producto> getProd() {
+        return prod;
     }
 
-    public void setRece(ArrayList<Receta> Rece) {
-        this.Rece = Rece;
+    public void setProd(ArrayList<Producto> prod) {
+        this.prod = prod;
     }
+
+    public String getCategoria() {
+        return Categoria;
+    }
+
+    public void setCategoria(String Categoria) {
+        this.Categoria = Categoria;
+    }
+   
     
 }
