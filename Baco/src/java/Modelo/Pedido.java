@@ -6,6 +6,7 @@
 package Modelo;
 
 import java.sql.Date;
+import java.sql.Time;
 import java.util.ArrayList;
 
 /**
@@ -16,16 +17,14 @@ public class Pedido {
     private int idPedido;
     private int idMesa;
     private boolean Estado;
-    private Date fechaPedido;
+    private Time fechaPedido;
 
-    public Pedido(int idPedido, int idMesa, boolean Estado, Date fechaPedido) {
+    public Pedido(int idPedido, int idMesa, boolean Estado, Time fechaPedido) {
         this.idPedido = idPedido;
         this.idMesa = idMesa;
         this.Estado = Estado;
         this.fechaPedido = fechaPedido;
     }
-    
-    
 
     public int getIdPedido() {
         return idPedido;
@@ -51,13 +50,15 @@ public class Pedido {
         this.Estado = Estado;
     }
 
-    public Date getFechaPedido() {
+    public Time getFechaPedido() {
         return fechaPedido;
     }
 
-    public void setFechaPedido(Date fechaPedido) {
+    public void setFechaPedido(Time fechaPedido) {
         this.fechaPedido = fechaPedido;
     }
+    
+
 
 
 }

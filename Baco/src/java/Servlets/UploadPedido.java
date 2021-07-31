@@ -5,11 +5,8 @@
  */
 package Servlets;
 
-import Controlador.GBDBaco;
-import Modelo.Usuario;
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -20,8 +17,8 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author panic
  */
-@WebServlet(name = "LoginBa", urlPatterns = {"/LoginBa"})
-public class LoginBaco extends HttpServlet {
+@WebServlet(name = "UploadPedido", urlPatterns = {"/UploadPedido"})
+public class UploadPedido extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -35,7 +32,18 @@ public class LoginBaco extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        
+        try (PrintWriter out = response.getWriter()) {
+            /* TODO output your page here. You may use following sample code. */
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet UploadPedido</title>");            
+            out.println("</head>");
+            out.println("<body>");
+            out.println("<h1>Servlet UploadPedido at " + request.getContextPath() + "</h1>");
+            out.println("</body>");
+            out.println("</html>");
+        }
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -51,8 +59,6 @@ public class LoginBaco extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-        rd.forward(request, response);
     }
 
     /**
@@ -67,24 +73,6 @@ public class LoginBaco extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        
-        String usuario = request.getParameter("txtUsuario");
-        String password = request.getParameter("txtPass");
-        GBDBaco gbd = new GBDBaco();
-        Usuario user = new Usuario(usuario, password);
-        Usuario autenticacion = gbd.ValidarUser(user);
-        
-        if(usuario.equals(autenticacion.getUser()) && password.equals(autenticacion.getPass()))
-        {
-            request.getSession().setAttribute("usr", autenticacion);
-            response.sendRedirect(getServletContext().getContextPath() + "/Admin");
-        }
-        else
-        {
-            request.setAttribute("mensajeError", "Usuario o contraseña incorrectos");
-            RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-            rd.forward(request, response);
-        }
     }
 
     /**

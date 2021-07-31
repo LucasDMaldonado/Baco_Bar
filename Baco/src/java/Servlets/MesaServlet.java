@@ -6,9 +6,11 @@
 package Servlets;
 
 import Controlador.GBDBaco;
+import Modelo.Mesa;
 import Modelo.Usuario;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -20,8 +22,8 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author panic
  */
-@WebServlet(name = "LoginBa", urlPatterns = {"/LoginBa"})
-public class LoginBaco extends HttpServlet {
+@WebServlet(name = "MesaServlet", urlPatterns = {"/MesaServlet"})
+public class MesaServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -34,8 +36,38 @@ public class LoginBaco extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
         
+        processRequest(request, response);
+        Usuario user = (Usuario) request.getSession().getAttribute("usr");
+        GBDBaco gbd = new GBDBaco();
+        String modo = request.getParameter("modo");
+        String page = request.getParameter("page");
+        
+     if(page.equals("ME"))            
+        {    
+            if (modo == null || modo.isEmpty()){
+            request.setAttribute("accion", "Agregar Mesas");
+            ArrayList<Mesa> lstMesas = gbd.obtenerMesas();
+            request.setAttribute("Mesas",lstMesas );
+            RequestDispatcher rd = request.getRequestDispatcher("/AdministrarMesa.jsp");            
+            rd.forward(request, response);
+        }
+            else if (modo.equals("EM")) {
+            request.setAttribute("accion", "Editar Mesa");
+            int idMesa = Integer.parseInt(request.getParameter("id"));
+            ArrayList<Mesa> lstMesas = gbd.obtenerMesas();
+            request.setAttribute("Mesas",lstMesas );
+                for (Mesa mesa : lstMesas) {
+                    if (mesa.getId() == idMesa) {
+                    Mesa M = mesa;
+                    request.setAttribute("Edit", M);
+                    RequestDispatcher rd = request.getRequestDispatcher("/AdministrarMesa.jsp");                        
+                     rd.forward(request, response); 
+
+                    }
+                }   
+            } 
+        } 
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -51,8 +83,6 @@ public class LoginBaco extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-        rd.forward(request, response);
     }
 
     /**
@@ -67,24 +97,6 @@ public class LoginBaco extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        
-        String usuario = request.getParameter("txtUsuario");
-        String password = request.getParameter("txtPass");
-        GBDBaco gbd = new GBDBaco();
-        Usuario user = new Usuario(usuario, password);
-        Usuario autenticacion = gbd.ValidarUser(user);
-        
-        if(usuario.equals(autenticacion.getUser()) && password.equals(autenticacion.getPass()))
-        {
-            request.getSession().setAttribute("usr", autenticacion);
-            response.sendRedirect(getServletContext().getContextPath() + "/Admin");
-        }
-        else
-        {
-            request.setAttribute("mensajeError", "Usuario o contraseña incorrectos");
-            RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-            rd.forward(request, response);
-        }
     }
 
     /**

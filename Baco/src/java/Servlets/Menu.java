@@ -5,9 +5,9 @@
  */
 package Servlets;
 
-import Controlador.GBDBaco;
 import java.io.IOException;
 import java.io.PrintWriter;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,8 +18,8 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author panic
  */
-@WebServlet(name = "Mesas", urlPatterns = {"/Mesas"})
-public class MesasServlet extends HttpServlet {
+@WebServlet(name = "Menu", urlPatterns = {"/Menu"})
+public class Menu extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -32,8 +32,7 @@ public class MesasServlet extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        
+       
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -49,8 +48,8 @@ public class MesasServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        GBDBaco gbd = new GBDBaco();
         
+        RequestDispatcher rd = request.getRequestDispatcher("/Menu.jsp");
     }
 
     /**

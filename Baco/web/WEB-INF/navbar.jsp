@@ -1,26 +1,28 @@
-<header id="header" class="fixed-top d-flex align-items-center ">
-    <div class="container d-flex align-items-center">
-
-      <div class="logo mr-auto">
-        <h1 class="text-light"><a href="index.html"><span>Delicious</span></a></h1>
-        <!-- Uncomment below if you prefer to use an image logo -->
-        <!-- <a href="index.html"><img src="assets/img/logo.png" alt="" class="img-fluid"></a>-->
-      </div>
-
-      <nav class="nav-menu d-none d-lg-block">
-        <ul>
-          <li class="active"><a href="index.html">Home</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#menu">Menu</a></li>
-          <li><a href="#specials">Specials</a></li>
-          <li><a href="#events">Events</a></li>
-          <li><a href="#chefs">Chefs</a></li>
-          <li><a href="#gallery">Gallery</a></li>
-          <li><a href="#contact">Contact</a></li>
-
-          <li class="book-a-table text-center"><a href="#book-a-table">Book a table</a></li>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">Market</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="Admin">pedidos
+            </a>
+          </li> 
+          <li class="nav-item">
+            <a class="nav-link" href="Admin?page=ME">Mesas</a>
+          </li>  
+             <li class="nav-item">
+            <a class="nav-link" href="Admin?page=TR">Tragos</a>
+          </li> 
+          <li class="nav-item">
+            <a class="nav-link" href="Admin?page=ST">Stock</a>
+          </li>
+             <li class="nav-item">
+            <a class="nav-link" href="Admin?page=VE">Ventas</a>
+          </li> 
         </ul>
-      </nav><!-- .nav-menu -->
-
+      </div>
     </div>
-  </header>
+  </nav>

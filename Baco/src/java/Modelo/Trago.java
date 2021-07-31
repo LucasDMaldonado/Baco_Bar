@@ -14,7 +14,7 @@ public class Trago {
     private String nombre;
     private boolean disponible;
     private double precio;
-    private int categoria;
+    private int Categoria;
 
 
     public Trago(int id, String nombre, boolean disponible, double precio, int categoria) {
@@ -22,7 +22,7 @@ public class Trago {
         this.nombre = nombre;
         this.disponible = disponible;
         this.precio = precio;
-        this.categoria = categoria;
+        this.Categoria = categoria;
         
     }
 
@@ -59,11 +59,11 @@ public class Trago {
     }
 
     public int getCategoria() {
-        return categoria;
+        return Categoria;
     }
 
     public void setCategoria(int categoria) {
-        this.categoria = categoria;
+        this.Categoria = categoria;
     }
 
     

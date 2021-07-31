@@ -6,22 +6,30 @@
 package Servlets;
 
 import Controlador.GBDBaco;
-import Modelo.Usuario;
+import Modelo.Mesa;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author panic
  */
-@WebServlet(name = "LoginBa", urlPatterns = {"/LoginBa"})
-public class LoginBaco extends HttpServlet {
+@WebServlet(name = "Mesas", urlPatterns = {"/Mesas"})
+public class UploadMesa extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -35,7 +43,7 @@ public class LoginBaco extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        
+
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -51,8 +59,6 @@ public class LoginBaco extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-        rd.forward(request, response);
     }
 
     /**
@@ -66,25 +72,39 @@ public class LoginBaco extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
-        
-        String usuario = request.getParameter("txtUsuario");
-        String password = request.getParameter("txtPass");
+
         GBDBaco gbd = new GBDBaco();
-        Usuario user = new Usuario(usuario, password);
-        Usuario autenticacion = gbd.ValidarUser(user);
-        
-        if(usuario.equals(autenticacion.getUser()) && password.equals(autenticacion.getPass()))
-        {
-            request.getSession().setAttribute("usr", autenticacion);
-            response.sendRedirect(getServletContext().getContextPath() + "/Admin");
+        int id = Integer.parseInt(request.getParameter("idMesa"));
+        int edit = Integer.parseInt(request.getParameter("Editar"));
+        String Nombre = request.getParameter("txtMesa");
+        String ubicacion = request.getParameter("txtUbicacion");
+        Mesa M;
+        if (edit == 0) {
+            M = new Mesa(0, Nombre, ubicacion, 0);
+            gbd.agregarMesa(M);
+            ArrayList<Mesa> lstMesas = gbd.obtenerMesas();
+            for (Mesa mesa : lstMesas) {
+                if (Nombre.equals(mesa.getNombre())) {
+                    String data = "http://localhost:8080/Baco/Admin?page=MN&Mesa=" + mesa.getId();
+                    String Path = "C:\\Users\\panic\\Documents\\GitHub\\Baco_Bar\\Baco\\web\\QR\\Mesa" + Nombre + ".jpg";
+                    try {
+                        BitMatrix Matrix = new MultiFormatWriter().encode(data, BarcodeFormat.QR_CODE, 300, 300);
+                        MatrixToImageWriter.writeToPath(Matrix, "jpg", Paths.get(Path));
+
+                        response.sendRedirect(getServletContext().getContextPath() + "/Admin?page=ME");
+
+                    } catch (WriterException ex) {
+                        Logger.getLogger(UploadMesa.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+
+        } else if (edit == 1) {
+            M = new Mesa(id, Nombre, ubicacion, 0);
+            gbd.actualizarMesa(M);
+            response.sendRedirect(getServletContext().getContextPath() + "/Admin?page=ME");
         }
-        else
-        {
-            request.setAttribute("mensajeError", "Usuario o contraseña incorrectos");
-            RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-            rd.forward(request, response);
-        }
+
     }
 
     /**

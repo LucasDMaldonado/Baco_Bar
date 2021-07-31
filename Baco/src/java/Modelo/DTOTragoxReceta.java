@@ -15,11 +15,19 @@ public class DTOTragoxReceta {
     
     private Trago trag;
     private ArrayList<Producto> prod;
-    private String Categoria;
+    private int Categoria;
 
-    public DTOTragoxReceta(Trago trag, ArrayList<Producto> prod, String Categoria) {
+    public DTOTragoxReceta(Trago trag, ArrayList<Producto> prod, int Categoria) {
         this.trag = trag;
         this.prod = prod;
+        this.Categoria = Categoria;
+    }
+
+    public int getCategoria() {
+        return Categoria;
+    }
+
+    public void setCategoria(int Categoria) {
         this.Categoria = Categoria;
     }
 
@@ -39,13 +47,8 @@ public class DTOTragoxReceta {
         this.prod = prod;
     }
 
-    public String getCategoria() {
-        return Categoria;
-    }
+  
 
-    public void setCategoria(String Categoria) {
-        this.Categoria = Categoria;
-    }
-   
+       
     
 }

@@ -6,10 +6,12 @@
 package Servlets;
 
 import Controlador.GBDBaco;
-import Modelo.Usuario;
+import Modelo.DTOTragoxReceta;
+import Modelo.Producto;
+import Modelo.Trago;
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.servlet.RequestDispatcher;
+import java.util.ArrayList;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -20,8 +22,8 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author panic
  */
-@WebServlet(name = "LoginBa", urlPatterns = {"/LoginBa"})
-public class LoginBaco extends HttpServlet {
+@WebServlet(name = "Trago", urlPatterns = {"/Trago"})
+public class UploadTrago extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -34,7 +36,6 @@ public class LoginBaco extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
         
     }
 
@@ -51,8 +52,6 @@ public class LoginBaco extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-        RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-        rd.forward(request, response);
     }
 
     /**
@@ -68,22 +67,35 @@ public class LoginBaco extends HttpServlet {
             throws ServletException, IOException {
         processRequest(request, response);
         
-        String usuario = request.getParameter("txtUsuario");
-        String password = request.getParameter("txtPass");
         GBDBaco gbd = new GBDBaco();
-        Usuario user = new Usuario(usuario, password);
-        Usuario autenticacion = gbd.ValidarUser(user);
+        int edit = Integer.parseInt(request.getParameter("Editar"));
+        int contador = Integer.parseInt(request.getParameter("contador"));
+        int categoria = Integer.parseInt(request.getParameter("cmbCategoria"));
+        String Nombre = request.getParameter("txtTrago");
+        double precio = Double.parseDouble(request.getParameter("txtPrecio"));
+        ArrayList<Producto> ingredientes = new ArrayList<>();
         
-        if(usuario.equals(autenticacion.getUser()) && password.equals(autenticacion.getPass()))
-        {
-            request.getSession().setAttribute("usr", autenticacion);
-            response.sendRedirect(getServletContext().getContextPath() + "/Admin");
-        }
-        else
-        {
-            request.setAttribute("mensajeError", "Usuario o contraseña incorrectos");
-            RequestDispatcher rd = request.getRequestDispatcher("/Login.jsp");
-            rd.forward(request, response);
+        for (int i = 0; i < contador; i++) {
+            
+            if (!request.getParameter("cmbIngredientes" + (i + 1)).isEmpty());            
+            {
+                int idprod = Integer.parseInt(request.getParameter("cmbIngredientes" + (i + 1)));                
+                Producto p = new Producto(idprod, "prod", true);
+                ingredientes.add(p);
+            }            
+        }        
+        DTOTragoxReceta NT;
+        if (edit == 0) {
+            Trago T = new Trago(0, Nombre, true, precio, categoria);
+            NT = new DTOTragoxReceta(T, ingredientes, categoria);
+            gbd.agregarTragoxReceta(NT);
+            response.sendRedirect(getServletContext().getContextPath() + "/Admin?page=TR");
+        } else if (edit == 1) {
+            int id = Integer.parseInt(request.getParameter("idTrago"));            
+            Trago T = new Trago(id, Nombre, true, precio, categoria);
+            NT = new DTOTragoxReceta(T, ingredientes, categoria);
+            gbd.actualizarTragoxReceta(NT);
+            response.sendRedirect(getServletContext().getContextPath() + "/Admin?page=TR");
         }
     }
 
